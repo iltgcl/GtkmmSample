@@ -1,0 +1,30 @@
+
+# built application files
+*.apk
+*.ap_
+
+# files for the dex VM
+*.dex
+
+# Java class files
+*.class
+
+# JNI c/cpp shared librarys
+*.so
+*.a
+# JNI c/cpp object files
+*.o
+*.P
+# JNI c/cpp depends files
+*.d
+# generated files
+bin/
+gen/
+debug/
+release/
+#eclipse related
+.settings/
+
+# Local configuration file (sdk path, etc)
+ local.properties
+#.gitignore

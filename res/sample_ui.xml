@@ -1,0 +1,73 @@
+<!--
+ * ui.xml
+-->
+
+<ui>
+
+  <menubar name="MenuBar">
+    <menu name="FileMenu" action="File">
+      <menuitem name="FileNewMenu" action="FileNew"/>
+      <menuitem name="FileOpenMenu" action="FileOpen"/>
+      <placeholder name="FileOps_2"/>
+      <separator/>
+      <menuitem name="FileSaveMenu" action="FileSave"/>
+      <menuitem name="FileSaveAsMenu" action="FileSaveAs"/>
+      <separator/>
+      <menuitem name="FileQuitMenu" action="FileQuit"/>
+    </menu>
+
+    <menu name="EditMenu" action="Edit">
+      <menuitem name="EditUndoMenu" action="EditUndo"/>
+      <menuitem name="EditRedoMenu" action="EditRedo"/>
+      <separator/>
+      <menuitem name="EditCutMenu" action="EditCut"/>
+      <menuitem name="EditCopyMenu" action="EditCopy"/>
+      <menuitem name="EditPasteMenu" action="EditPaste"/>
+      <menuitem name="EditDeleteMenu" action="EditDelete"/>
+      <separator/>
+      <menuitem name="EditSelectAllMenu" action="EditSelectAll"/>
+      <separator/>
+      <menuitem name="EditPreferencesMenu" action="EditPreferences"/>
+    </menu>
+
+    <menu name="ViewMenu" action="View">
+      <menuitem name="ViewToolbarMenu" action="ViewToolbar"/>
+      <menuitem name="ViewStatusbarMenu" action="ViewStatusbar"/>
+      <separator/>
+      <menuitem name="ViewFullscreenMenu" action="ViewFullscreen"/>
+      <separator/>
+    </menu>
+
+    <menu name="HelpMenu" action="Help">
+      <menuitem name="HelpAboutMenu" action="HelpAbout"/>
+    </menu>
+  </menubar>
+
+  <toolbar name="ToolBar">
+    <toolitem action="FileNew"/>
+    <toolitem action="FileSave"/>
+    <separator/>
+    <toolitem action="EditUndo"/>
+    <toolitem action="EditRedo"/>
+    <separator/>
+    <toolitem action="EditCut"/>
+    <toolitem action="EditCopy"/>
+    <toolitem action="EditPaste"/>
+    <separator/>
+  </toolbar>
+
+  <toolbar name="FullscreenToolBar">
+    <toolitem action="FileNew"/>
+    <toolitem action="FileSave"/>
+    <separator/>
+    <toolitem action="EditUndo"/>
+    <toolitem action="EditRedo"/>
+    <separator/>
+    <toolitem action="EditCut"/>
+    <toolitem action="EditCopy"/>
+    <toolitem action="EditPaste"/>
+    <separator expand="true" />
+    <toolitem action="LeaveFullscreen"/>
+  </toolbar>
+
+</ui>
