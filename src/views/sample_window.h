@@ -24,9 +24,6 @@
 #include <gtkmm/uimanager.h>
 #include <gtkmm/box.h>
 
-
-G_BEGIN_DECLS
-
 class SampleWindow : public Gtk::Window 
 {
  public:
@@ -69,8 +66,6 @@ class SampleWindow : public Gtk::Window
   Gtk::VBox m_VBox;
 };
 
-
-G_END_DECLS
 
 #endif /* ifndef SAMPLE_WINDOW_H */
 
