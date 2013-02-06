@@ -23,6 +23,9 @@
 #include <gtkmm/actiongroup.h>
 #include <gtkmm/uimanager.h>
 #include <gtkmm/box.h>
+#include <gtkmm/action.h>
+
+#include "sample_statusbar.h"
 
 class SampleWindow : public Gtk::Window 
 {
@@ -52,18 +55,22 @@ class SampleWindow : public Gtk::Window
   void onViewToolbar();
   void onViewStatusbar();
   void onViewFullscreen();
-
+  /* Menu item select and deselect. */
+  void on_menu_item_select(const Glib::RefPtr<Gtk::Action>& action);
+  void on_menu_item_deselect();
+  void on_connect_proxy(const Glib::RefPtr<Gtk::Action>& action, Gtk::Widget* widget);
 
   virtual bool on_delete_event(GdkEventAny* event); //override
 
  private:
   void initActions();
-  void initUIManager();
+  void initUI();
   Glib::RefPtr<Gtk::ActionGroup> m_refSensitiveActionGroup;
   Glib::RefPtr<Gtk::ActionGroup> m_refNormalActionGroup;
   Glib::RefPtr<Gtk::ActionGroup> m_refToggleActionGroup;
   Glib::RefPtr<Gtk::UIManager> m_refUIManager;
   Gtk::VBox m_VBox;
+  SampleStatusbar m_Statusbar;
 };
 
 

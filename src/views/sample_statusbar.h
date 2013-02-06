@@ -34,6 +34,8 @@ class SampleStatusbar : public Gtk::Statusbar
  private:
   typedef std::map<const Glib::ustring*, unsigned int> type_map_cmds;
   type_map_cmds m_mapCmds;
+  Gtk::Statusbar m_cmdStatusbar;
+  Gtk::Spinner m_cmdSpinner;
 
 };
 

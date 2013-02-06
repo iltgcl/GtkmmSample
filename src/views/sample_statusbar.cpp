@@ -20,7 +20,16 @@
 
 
 SampleStatusbar::SampleStatusbar()
+  :m_cmdStatusbar(), m_cmdSpinner()
 {
+  set_has_resize_grip(false);
+  m_cmdStatusbar.set_has_resize_grip(false);
+  //m_cmdStatusbar.show();
+  pack_end(m_cmdStatusbar, false, true, 0);
+  //m_cmdSpinner.hide();
+  pack_end(m_cmdSpinner, false, true, 0);
+
+  show_all();
 }
 
 SampleStatusbar::~SampleStatusbar()

@@ -1,6 +1,8 @@
 #include <iostream>
 #include <gtkmm/stock.h>
 #include <gtkmm/main.h>
+#include <gtkmm/menuitem.h>
+#include <gtkmm/item.h>
 #include <gtkmm/toggleaction.h>
 
 #include "sample_window.h"
@@ -9,6 +11,8 @@
 
 SampleWindow::SampleWindow()
 {
+  set_default_size(800, 8 * 62);
+  set_position(Gtk::WIN_POS_CENTER_ALWAYS);
   add(m_VBox);
 
   m_refSensitiveActionGroup = Gtk::ActionGroup::create("SensitiveActions");
@@ -18,7 +22,7 @@ SampleWindow::SampleWindow()
   add_accel_group(m_refUIManager->get_accel_group());
 
   initActions();
-  initUIManager();
+  initUI();
 
   show_all();
 
@@ -175,6 +179,7 @@ SampleWindow::initActions()
   m_refSensitiveActionGroup->add(
       Gtk::Action::create("LeaveFullscreen", Gtk::Stock::LEAVE_FULLSCREEN),
       sigc::mem_fun(*this, &SampleWindow::onLeaveFullscreen));
+  m_refUIManager->insert_action_group(m_refSensitiveActionGroup);
 
   /* normal action */
   m_refNormalActionGroup->add(
@@ -210,6 +215,7 @@ SampleWindow::initActions()
   m_refNormalActionGroup->add(
       Gtk::Action::create("EditPreferences", Gtk::Stock::PREFERENCES),
       sigc::mem_fun(*this, &SampleWindow::onEditPreferences));
+  m_refUIManager->insert_action_group(m_refNormalActionGroup);
   /* Toggle action */
   m_refToggleActionGroup->add(
       Gtk::ToggleAction::create("ViewToolbar",  "Toolbar"),
@@ -220,23 +226,51 @@ SampleWindow::initActions()
   m_refToggleActionGroup->add(
       Gtk::ToggleAction::create("ViewFullscreen",  "Fullscreen"),
       sigc::mem_fun(*this, &SampleWindow::onViewFullscreen));
+  m_refUIManager->insert_action_group(m_refToggleActionGroup);
 
 }
 
 void
-SampleWindow::initUIManager()
+SampleWindow::on_menu_item_select(const Glib::RefPtr<Gtk::Action>& action)
 {
-  m_refUIManager->insert_action_group(m_refSensitiveActionGroup);
-  m_refUIManager->insert_action_group(m_refNormalActionGroup);
-  m_refUIManager->insert_action_group(m_refToggleActionGroup);
+  std::cout << " SampleWindow::on_menu_item_select " << std::endl;
+}
 
+void
+SampleWindow::on_menu_item_deselect()
+{
+  std::cout << " SampleWindow::on_menu_item_deselect " << std::endl;
+}
+
+void 
+SampleWindow::on_connect_proxy(const Glib::RefPtr<Gtk::Action>& action, Gtk::Widget *widget)
+{
+  std::cout << " SampleWindow::on_connect_proxy " << std::endl;
+  Gtk::MenuItem* menu_item = dynamic_cast<Gtk::MenuItem*>(widget);
+  if(menu_item) {
+    Gtk::Item *item = dynamic_cast<Gtk::Item*>(menu_item);
+    item->signal_select().connect(
+        sigc::bind(sigc::mem_fun(*this, &SampleWindow::on_menu_item_select), action));
+    item->signal_deselect().connect(
+        sigc::mem_fun(*this, &SampleWindow::on_menu_item_deselect));
+  }
+
+}
+
+void
+SampleWindow::initUI()
+{
   m_refUIManager->add_ui_from_file(SAMPLE_UI_FILE);
+  m_refUIManager->signal_connect_proxy().connect(sigc::mem_fun(*this, &SampleWindow::on_connect_proxy));
 
   Gtk::Widget* pWidget = m_refUIManager->get_widget("/MenuBar");
   m_VBox.pack_start(*pWidget, Gtk::PACK_SHRINK);
 
   pWidget = m_refUIManager->get_widget("/ToolBar");
   m_VBox.pack_start(*pWidget, Gtk::PACK_SHRINK);
+
+  m_Statusbar.show();
+  m_VBox.pack_end(m_Statusbar, Gtk::PACK_SHRINK);
 }
 
 
