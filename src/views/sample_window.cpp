@@ -4,6 +4,7 @@
 #include <gtkmm/menuitem.h>
 #include <gtkmm/item.h>
 #include <gtkmm/toggleaction.h>
+#include <gtkmm/accelkey.h>
 
 #include "sample_window.h"
 
@@ -26,11 +27,25 @@ SampleWindow::SampleWindow()
 
   show_all();
 
+
   signal_delete_event().connect(sigc::mem_fun(*this, &SampleWindow::on_delete_event)); 
 }
 
 SampleWindow::~SampleWindow()
 {
+}
+
+bool
+SampleWindow::isFullscreen()
+{
+  return m_winState & GDK_WINDOW_STATE_FULLSCREEN;
+}
+
+bool 
+SampleWindow::on_window_state_event(GdkEventWindowState* event)
+{
+  m_winState = event->new_window_state;
+  return false;
 }
 
 void
@@ -129,6 +144,11 @@ void
 SampleWindow::onViewFullscreen()
 {
   std::cout << " onViewFullscreen " << std::endl;
+  if(isFullscreen()) {
+    requestUnfullscreen();
+  } else {
+    requestFullscreen();
+  }
 }
 
 /* Help menu */
@@ -148,6 +168,12 @@ SampleWindow::on_delete_event(GdkEventAny* event)
 void 
 SampleWindow::onLeaveFullscreen()
 {
+  Glib::RefPtr<Gtk::Action> action = m_refToggleActionGroup->get_action("ViewToolbar");
+  g_assert(action != 0);
+  action->block_activate();
+  (Glib::RefPtr<Gtk::ToggleAction>::cast_dynamic(action))->set_active(false);
+  requestUnfullscreen();
+  action->unblock_activate();
 }
 
 void
@@ -162,18 +188,22 @@ SampleWindow::initActions()
   /* sensitive action */
   m_refSensitiveActionGroup->add(
       Gtk::Action::create("FileNew", Gtk::Stock::NEW, "_New", "Create a new document"),
+      Gtk::AccelKey("<control>N"),
       sigc::mem_fun(*this, &SampleWindow::onFileNew));
 
   m_refSensitiveActionGroup->add(
       Gtk::Action::create("FileOpen", Gtk::Stock::OPEN, "_Open...", "Open a file"),
+      Gtk::AccelKey("<control>O"),
       sigc::mem_fun(*this, &SampleWindow::onFileOpen));
 
   m_refSensitiveActionGroup->add(
       Gtk::Action::create("FileQuit", Gtk::Stock::QUIT, "_Quit", "Quit the program"),
+      Gtk::AccelKey("<control>Q"),
       sigc::mem_fun(*this, &SampleWindow::onFileQuit));
 
   m_refSensitiveActionGroup->add(
-      Gtk::Action::create("HelpAbout", Gtk::Stock::ABOUT ),
+      Gtk::Action::create("HelpAbout", Gtk::Stock::ABOUT, 
+                          "_About", "About this application" ),
       sigc::mem_fun(*this, &SampleWindow::onHelpAbout));
 
   m_refSensitiveActionGroup->add(
@@ -183,48 +213,64 @@ SampleWindow::initActions()
 
   /* normal action */
   m_refNormalActionGroup->add(
-      Gtk::Action::create("FileSave", Gtk::Stock::SAVE),
+      Gtk::Action::create("FileSave", Gtk::Stock::SAVE, Glib::ustring(), "Save the current file"),
+      Gtk::AccelKey("<control>S"),
       sigc::mem_fun(*this, &SampleWindow::onFileSave));
 
   m_refNormalActionGroup->add(
-      Gtk::Action::create("FileSaveAs", Gtk::Stock::SAVE_AS),
+      Gtk::Action::create("FileSaveAs", Gtk::Stock::SAVE_AS, 
+                          Glib::ustring(), "Save the current file with different name"),
+      Gtk::AccelKey("<shift><control>S"),
       sigc::mem_fun(*this, &SampleWindow::onFileSaveAs));
 
   m_refNormalActionGroup->add(
-      Gtk::Action::create("EditUndo", Gtk::Stock::UNDO),
+      Gtk::Action::create("EditUndo", Gtk::Stock::UNDO, Glib::ustring(), "Undo the last action"),
+      Gtk::AccelKey("<control>Z"),
       sigc::mem_fun(*this, &SampleWindow::onEditUndo));
 
   m_refNormalActionGroup->add(
-      Gtk::Action::create("EditRedo", Gtk::Stock::REDO),
+      Gtk::Action::create("EditRedo", Gtk::Stock::REDO, 
+                          Glib::ustring(), "Redo the last undone action"),
+      Gtk::AccelKey("<shift><control>Z"),
       sigc::mem_fun(*this, &SampleWindow::onEditRedo));
   m_refNormalActionGroup->add(
-      Gtk::Action::create("EditCut", Gtk::Stock::CUT),
+      Gtk::Action::create("EditCut", Gtk::Stock::CUT, Glib::ustring(), "Cut the selection"),
+      Gtk::AccelKey("<control>X"),
       sigc::mem_fun(*this, &SampleWindow::onEditCut));
   m_refNormalActionGroup->add(
-      Gtk::Action::create("EditCopy", Gtk::Stock::COPY),
+      Gtk::Action::create("EditCopy", Gtk::Stock::COPY, Glib::ustring(), "Copy the selection"),
+      Gtk::AccelKey("<control>C"),
       sigc::mem_fun(*this, &SampleWindow::onEditCopy));
   m_refNormalActionGroup->add(
-      Gtk::Action::create("EditPaste", Gtk::Stock::PASTE),
+      Gtk::Action::create("EditPaste", Gtk::Stock::PASTE, Glib::ustring(), "Paste the clipboard"),
+      Gtk::AccelKey("<control>V"),
       sigc::mem_fun(*this, &SampleWindow::onEditPaste));
   m_refNormalActionGroup->add(
-      Gtk::Action::create("EditDelete", Gtk::Stock::DELETE),
+      Gtk::Action::create("EditDelete", Gtk::Stock::DELETE, 
+                          Glib::ustring(), "Delete the selected text"),
       sigc::mem_fun(*this, &SampleWindow::onEditDelete));
   m_refNormalActionGroup->add(
-      Gtk::Action::create("EditSelectAll", Gtk::Stock::SELECT_ALL),
+      Gtk::Action::create("EditSelectAll", Gtk::Stock::SELECT_ALL, 
+                          Glib::ustring(), "Select the entire document"),
+      Gtk::AccelKey("<control>A"),
       sigc::mem_fun(*this, &SampleWindow::onEditSelectAll));
   m_refNormalActionGroup->add(
-      Gtk::Action::create("EditPreferences", Gtk::Stock::PREFERENCES),
+      Gtk::Action::create("EditPreferences", Gtk::Stock::PREFERENCES, 
+                          "Pr_eferences", "Configure the application"),
       sigc::mem_fun(*this, &SampleWindow::onEditPreferences));
   m_refUIManager->insert_action_group(m_refNormalActionGroup);
   /* Toggle action */
   m_refToggleActionGroup->add(
-      Gtk::ToggleAction::create("ViewToolbar",  "Toolbar"),
+      Gtk::ToggleAction::create("ViewToolbar",  "_Toolbar", 
+                                "Show or hide the toolbar in the current window"),
       sigc::mem_fun(*this, &SampleWindow::onViewToolbar));
   m_refToggleActionGroup->add(
-      Gtk::ToggleAction::create("ViewStatusbar",  "Statusbar"),
+      Gtk::ToggleAction::create("ViewStatusbar",  "_Statusbar",
+                                "Show or hide the statusbar in the current window"),
       sigc::mem_fun(*this, &SampleWindow::onViewStatusbar));
   m_refToggleActionGroup->add(
-      Gtk::ToggleAction::create("ViewFullscreen",  "Fullscreen"),
+      Gtk::ToggleAction::create("ViewFullscreen",  "Fullscreen", "Fullscreen"),
+      Gtk::AccelKey("F11"),
       sigc::mem_fun(*this, &SampleWindow::onViewFullscreen));
   m_refUIManager->insert_action_group(m_refToggleActionGroup);
 
@@ -233,19 +279,21 @@ SampleWindow::initActions()
 void
 SampleWindow::on_menu_item_select(const Glib::RefPtr<Gtk::Action>& action)
 {
-  std::cout << " SampleWindow::on_menu_item_select " << std::endl;
+  Glib::ustring tooltip = action->get_tooltip();
+  if(!tooltip.empty()) {
+    m_Statusbar.push(tooltip, m_ctxId);
+  }
 }
 
 void
 SampleWindow::on_menu_item_deselect()
 {
-  std::cout << " SampleWindow::on_menu_item_deselect " << std::endl;
+  m_Statusbar.pop(m_ctxId);
 }
 
 void 
 SampleWindow::on_connect_proxy(const Glib::RefPtr<Gtk::Action>& action, Gtk::Widget *widget)
 {
-  std::cout << " SampleWindow::on_connect_proxy " << std::endl;
   Gtk::MenuItem* menu_item = dynamic_cast<Gtk::MenuItem*>(widget);
   if(menu_item) {
     Gtk::Item *item = dynamic_cast<Gtk::Item*>(menu_item);
@@ -255,6 +303,48 @@ SampleWindow::on_connect_proxy(const Glib::RefPtr<Gtk::Action>& action, Gtk::Wid
         sigc::mem_fun(*this, &SampleWindow::on_menu_item_deselect));
   }
 
+}
+
+void
+SampleWindow::on_toolbar_visible_changed()
+{
+}
+
+void
+SampleWindow::on_statusbar_visible_changed()
+{
+}
+
+void
+SampleWindow::requestFullscreen()
+{
+  if(isFullscreen()) return;
+  fullscreen();
+  Gtk::Widget* pWidget = m_refUIManager->get_widget("/MenuBar");
+  pWidget->hide();
+  m_tbVisibleConnection.block();
+  pWidget = m_refUIManager->get_widget("/ToolBar");
+  pWidget->hide();
+  m_sbVisibleConnection.block();
+  m_Statusbar.hide();
+  
+}
+
+void
+SampleWindow::requestUnfullscreen()
+{
+  if(!isFullscreen()) return;
+  unfullscreen();
+  Gtk::Widget* pWidget = m_refUIManager->get_widget("/MenuBar");
+  pWidget->show();
+  m_tbVisibleConnection.unblock();
+  pWidget = m_refUIManager->get_widget("/ToolBar");
+  Glib::RefPtr<Gtk::Action> action = m_refToggleActionGroup->get_action("ViewToolbar");
+  g_assert(action != 0);
+  if((Glib::RefPtr<Gtk::ToggleAction>::cast_dynamic(action))->get_active()) {
+    pWidget->show();
+  }
+  m_sbVisibleConnection.unblock();
 }
 
 void
@@ -268,9 +358,14 @@ SampleWindow::initUI()
 
   pWidget = m_refUIManager->get_widget("/ToolBar");
   m_VBox.pack_start(*pWidget, Gtk::PACK_SHRINK);
+  m_tbVisibleConnection = pWidget->property_visible().signal_changed().connect(
+      sigc::mem_fun(*this, &SampleWindow::on_toolbar_visible_changed));
 
   m_Statusbar.show();
   m_VBox.pack_end(m_Statusbar, Gtk::PACK_SHRINK);
+  m_ctxId = m_Statusbar.get_context_id("tip_message");
+  m_tbVisibleConnection = m_Statusbar.property_visible().signal_changed().connect(
+      sigc::mem_fun(*this, &SampleWindow::on_statusbar_visible_changed));
 }
 
 

@@ -24,16 +24,30 @@
 #include <gtkmm/uimanager.h>
 #include <gtkmm/box.h>
 #include <gtkmm/action.h>
+#include <gdkmm/window.h>
 
 #include "sample_statusbar.h"
+
+typedef enum {
+  SAMPLE_WINDOW_STATE_NORMAL,
+  SAMPLE_WINDOW_STATE_ASYNC_EXE,
+  SAMPLE_WINDOW_STATE_ERROR,
+}SampleWindowState;
 
 class SampleWindow : public Gtk::Window 
 {
  public:
   SampleWindow();
   virtual ~SampleWindow();
+  bool isFullscreen();
 
  protected:
+  sigc::connection m_tbVisibleConnection;
+  sigc::connection m_sbVisibleConnection;
+  void on_toolbar_visible_changed();
+  void on_statusbar_visible_changed();
+  /* override signal */
+  virtual bool on_window_state_event(GdkEventWindowState* event);
   /* Always sensitive action callback */
   void onFileNew();
   void onFileOpen();
@@ -65,12 +79,16 @@ class SampleWindow : public Gtk::Window
  private:
   void initActions();
   void initUI();
+  void requestFullscreen();
+  void requestUnfullscreen();
   Glib::RefPtr<Gtk::ActionGroup> m_refSensitiveActionGroup;
   Glib::RefPtr<Gtk::ActionGroup> m_refNormalActionGroup;
   Glib::RefPtr<Gtk::ActionGroup> m_refToggleActionGroup;
   Glib::RefPtr<Gtk::UIManager> m_refUIManager;
   Gtk::VBox m_VBox;
   SampleStatusbar m_Statusbar;
+  guint m_ctxId;
+  GdkWindowState m_winState;
 };
 
 

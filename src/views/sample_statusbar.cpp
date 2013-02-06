@@ -18,17 +18,14 @@
 
 #include "sample_statusbar.h"
 
+#define CMD_LABEL_WIDTH_CHARS 18
 
 SampleStatusbar::SampleStatusbar()
-  :m_cmdStatusbar(), m_cmdSpinner()
 {
   set_has_resize_grip(false);
-  m_cmdStatusbar.set_has_resize_grip(false);
-  //m_cmdStatusbar.show();
-  pack_end(m_cmdStatusbar, false, true, 0);
-  //m_cmdSpinner.hide();
+  m_cmdLabel.set_width_chars(CMD_LABEL_WIDTH_CHARS);
+  pack_end(m_cmdLabel, false, true, 0);
   pack_end(m_cmdSpinner, false, true, 0);
-
   show_all();
 }
 
