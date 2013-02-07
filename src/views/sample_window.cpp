@@ -11,6 +11,7 @@
 #define  SAMPLE_UI_FILE     RES_DIR "/sample_ui.xml" 
 
 SampleWindow::SampleWindow()
+  :m_pFullscreenToolbar(0)
 {
   set_default_size(800, 8 * 62);
   set_position(Gtk::WIN_POS_CENTER_ALWAYS);
@@ -33,6 +34,7 @@ SampleWindow::SampleWindow()
 
 SampleWindow::~SampleWindow()
 {
+  delete m_pFullscreenToolbar;
 }
 
 bool
@@ -366,6 +368,10 @@ SampleWindow::initUI()
   m_ctxId = m_Statusbar.get_context_id("tip_message");
   m_tbVisibleConnection = m_Statusbar.property_visible().signal_changed().connect(
       sigc::mem_fun(*this, &SampleWindow::on_statusbar_visible_changed));
+
+  pWidget = m_refUIManager->get_widget("/FullscreenToolBar");
+  m_pFullscreenToolbar = new FullscreenToolbar(*this, static_cast<Gtk::Toolbar&>(*pWidget));
+
 }
 
 

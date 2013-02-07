@@ -27,6 +27,7 @@
 #include <gdkmm/window.h>
 
 #include "sample_statusbar.h"
+#include "fullscreen_toolbar.h"
 
 typedef enum {
   SAMPLE_WINDOW_STATE_NORMAL,
@@ -89,6 +90,7 @@ class SampleWindow : public Gtk::Window
   SampleStatusbar m_Statusbar;
   guint m_ctxId;
   GdkWindowState m_winState;
+  FullscreenToolbar *m_pFullscreenToolbar;
 };
 
 

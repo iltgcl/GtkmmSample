@@ -39,7 +39,7 @@ CPP_EXT ?= cpp
 
 ifeq ($(BUILD_MODE),debug)
   LOCAL_CFLAGS += -g 
-  LOCAL_CPPFLAGS += -DDEBUG
+  LOCAL_CPPFLAGS += -Wall -DDEBUG
 else
   ifeq ($(BUILD_MODE),release)
     LOCAL_CFLAGS += -O2 -DG_DISABLE_CHECKS -DG_DISABLE_ASSERT
