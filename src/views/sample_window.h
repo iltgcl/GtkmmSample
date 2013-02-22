@@ -20,6 +20,8 @@
 
 #include <glibmm/refptr.h>
 #include <gtkmm/window.h>
+#include <gtkmm/menubar.h>
+#include <gtkmm/toolbar.h>
 #include <gtkmm/actiongroup.h>
 #include <gtkmm/uimanager.h>
 #include <gtkmm/box.h>
@@ -27,7 +29,6 @@
 #include <gdkmm/window.h>
 
 #include "sample_statusbar.h"
-#include "fullscreen_toolbar.h"
 
 typedef enum {
   SAMPLE_WINDOW_STATE_NORMAL,
@@ -43,12 +44,11 @@ class SampleWindow : public Gtk::Window
   bool isFullscreen();
 
  protected:
-  sigc::connection m_tbVisibleConnection;
-  sigc::connection m_sbVisibleConnection;
-  void on_toolbar_visible_changed();
-  void on_statusbar_visible_changed();
   /* override signal */
   virtual bool on_window_state_event(GdkEventWindowState* event);
+  /* callbacks */
+  void onToolbarVisibleChanged();
+  void onStatusbarVisibleChanged();
   /* Always sensitive action callback */
   void onFileNew();
   void onFileOpen();
@@ -71,26 +71,41 @@ class SampleWindow : public Gtk::Window
   void onViewStatusbar();
   void onViewFullscreen();
   /* Menu item select and deselect. */
-  void on_menu_item_select(const Glib::RefPtr<Gtk::Action>& action);
-  void on_menu_item_deselect();
-  void on_connect_proxy(const Glib::RefPtr<Gtk::Action>& action, Gtk::Widget* widget);
+  void onMenuItemSelect(const Glib::RefPtr<Gtk::Action>& action);
+  void onMenuItemDeselect();
+  void onConnectProxy(const Glib::RefPtr<Gtk::Action>& action, Gtk::Widget* widget);
+  /* fullscreen window callback  */
+  bool onEnterNotifyEvent(GdkEventCrossing* event);
+  bool onLeaveNotifyEvent(GdkEventCrossing* event);
 
-  virtual bool on_delete_event(GdkEventAny* event); //override
+  bool onDeleteEvent(GdkEventAny* event); //override
 
  private:
   void initActions();
   void initUI();
   void requestFullscreen();
   void requestUnfullscreen();
+  void displayFullscreenToolbar(bool is_show);
+  bool onAnimationTimeout();
+  void beginAnimation(bool is_enter);
+  void getGeometry(Gdk::Rectangle &rect);
+
+  guint m_ctxId;
+  GdkWindowState m_winState;
+
   Glib::RefPtr<Gtk::ActionGroup> m_refSensitiveActionGroup;
   Glib::RefPtr<Gtk::ActionGroup> m_refNormalActionGroup;
   Glib::RefPtr<Gtk::ActionGroup> m_refToggleActionGroup;
   Glib::RefPtr<Gtk::UIManager> m_refUIManager;
   Gtk::VBox m_VBox;
+  Gtk::MenuBar *m_pMenuBar;
+  Gtk::Toolbar *m_pToolbar;
   SampleStatusbar m_Statusbar;
-  guint m_ctxId;
-  GdkWindowState m_winState;
-  FullscreenToolbar *m_pFullscreenToolbar;
+  sigc::connection m_tbVisibleConnection;
+  sigc::connection m_sbVisibleConnection;
+  /* fullscreen toolbar */
+  bool m_isEnter;
+  Gtk::Window m_winFullscreen;
 };
 
 
