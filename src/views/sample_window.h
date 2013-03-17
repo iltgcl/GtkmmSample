@@ -46,6 +46,8 @@ class SampleWindow : public Gtk::Window
  protected:
   /* override signal */
   virtual bool on_window_state_event(GdkEventWindowState* event);
+  virtual bool on_configure_event(GdkEventConfigure* event);
+
   /* callbacks */
   void onToolbarVisibleChanged();
   void onStatusbarVisibleChanged();
@@ -77,12 +79,14 @@ class SampleWindow : public Gtk::Window
   /* fullscreen window callback  */
   bool onEnterNotifyEvent(GdkEventCrossing* event);
   bool onLeaveNotifyEvent(GdkEventCrossing* event);
-
   bool onDeleteEvent(GdkEventAny* event); //override
 
  private:
+  void initToolbarVisible();
+  void initStatusbarVisible();
   void initActions();
   void initUI();
+  void saveWindowState();
   void requestFullscreen();
   void requestUnfullscreen();
   void displayFullscreenToolbar(bool is_show);

@@ -2,8 +2,6 @@
 BUILD_MODE := debug
 #BUILD_MODE := release
 
-SRC_ROOT := .
-
 TARGET := GtkmmSample
 
 #LOCAL_ASFLAGS

@@ -7,6 +7,7 @@
 #include <gtkmm/accelkey.h>
 
 #include "sample_window.h"
+#include "../sample_settings.h"
 
 #define  SAMPLE_UI_FILE     RES_DIR "/sample_ui.xml" 
 #define ANIMATION_SPEED 4
@@ -14,9 +15,19 @@
 SampleWindow::SampleWindow()
   :m_winFullscreen(Gtk::WINDOW_POPUP)
 {
-  set_default_size(800, 8 * 62);
+  int w, h, state;
+  state = SampleSettings::getDefault()->getWindowState();
+  SampleSettings::getDefault()->getWindowSize(w, h);
+  set_default_size(w, h);
   set_position(Gtk::WIN_POS_CENTER_ALWAYS);
+  if((state & GDK_WINDOW_STATE_MAXIMIZED) != 0) {
+    maximize();
+  } else {
+    unmaximize();
+  }
+
   add(m_VBox);
+  m_VBox.show();
 
   m_refSensitiveActionGroup = Gtk::ActionGroup::create("SensitiveActions");
   m_refNormalActionGroup = Gtk::ActionGroup::create("NormalActions");
@@ -27,7 +38,7 @@ SampleWindow::SampleWindow()
   initActions();
   initUI();
 
-  show_all();
+  show();
 
   /* init fullscreen */
   Gtk::Widget *pWidget = m_refUIManager->get_widget("/FullscreenToolBar");
@@ -41,8 +52,19 @@ SampleWindow::SampleWindow()
   signal_delete_event().connect(sigc::mem_fun(*this, &SampleWindow::onDeleteEvent)); 
 }
 
+void
+SampleWindow::saveWindowState()
+{
+  if((m_winState & (GDK_WINDOW_STATE_MAXIMIZED | GDK_WINDOW_STATE_FULLSCREEN)) == 0 ) {
+    int w = get_allocation().get_width();
+    int h = get_allocation().get_height();
+    SampleSettings::getDefault()->setWindowSize(w, h); 
+  }
+}
+
 SampleWindow::~SampleWindow()
 {
+  saveWindowState();
 }
 
 bool
@@ -56,7 +78,19 @@ SampleWindow::on_window_state_event(GdkEventWindowState* event)
 {
   std::cout << " SampleWindow::on_window_state_event " << std::endl;
   m_winState = event->new_window_state;
+  SampleSettings::getDefault()->setWindowState(m_winState);
+
   return false;
+}
+
+bool 
+SampleWindow::on_configure_event(GdkEventConfigure* event)
+{
+  if(get_realized() && ((m_winState & 
+                         (GDK_WINDOW_STATE_MAXIMIZED | GDK_WINDOW_STATE_FULLSCREEN))==0)) {
+    saveWindowState();
+  }
+  return Window::on_configure_event(event);
 }
 
 void
@@ -290,21 +324,21 @@ SampleWindow::initActions()
       sigc::mem_fun(*this, &SampleWindow::onEditPreferences));
   m_refUIManager->insert_action_group(m_refNormalActionGroup);
   /* Toggle action */
-  Glib::RefPtr<Gtk::ToggleAction> toggle_action = Gtk::ToggleAction::create(
-      "ViewToolbar",  "_Toolbar", "Show or hide the toolbar in the current window");
-  toggle_action->set_active(true);
-  m_refToggleActionGroup->add(toggle_action, sigc::mem_fun(*this, &SampleWindow::onViewToolbar));
-  toggle_action = Gtk::ToggleAction::create(
-      "ViewStatusbar",  "_Statusbar", "Show or hide the statusbar in the current window");
-  toggle_action->set_active(true);
-  m_refToggleActionGroup->add(toggle_action, sigc::mem_fun(*this, &SampleWindow::onViewStatusbar));
+  m_refToggleActionGroup->add(
+      Gtk::ToggleAction::create(
+          "ViewToolbar",  "_Toolbar", "Show or hide the toolbar in the current window"), 
+      sigc::mem_fun(*this, &SampleWindow::onViewToolbar));
+
+  m_refToggleActionGroup->add(
+      Gtk::ToggleAction::create(
+          "ViewStatusbar",  "_Statusbar", "Show or hide the statusbar in the current window"), 
+      sigc::mem_fun(*this, &SampleWindow::onViewStatusbar));
 
   m_refToggleActionGroup->add(
       Gtk::ToggleAction::create("ViewFullscreen",  "Fullscreen", "Fullscreen"),
       Gtk::AccelKey("F11"),
       sigc::mem_fun(*this, &SampleWindow::onViewFullscreen));
   m_refUIManager->insert_action_group(m_refToggleActionGroup);
-
 }
 
 void
@@ -332,14 +366,14 @@ SampleWindow::onConnectProxy(const Glib::RefPtr<Gtk::Action>& action, Gtk::Widge
     menu_item->signal_deselect().connect(
         sigc::mem_fun(*this, &SampleWindow::onMenuItemDeselect));
   }
-
 }
 
 void
 SampleWindow::onToolbarVisibleChanged()
 {
   bool visible = m_pToolbar->get_visible();
-  std::cout << " @@@@@@@@ visible =  " << visible << std::endl;
+  std::cout << " toolbar visible =  " << visible << std::endl;
+  SampleSettings::getDefault()->setToolbarVisible(visible);
   Glib::RefPtr<Gtk::ToggleAction> action =
      Glib::RefPtr<Gtk::ToggleAction>::cast_dynamic(
          m_refToggleActionGroup->get_action("ViewToolbar"));
@@ -354,6 +388,7 @@ void
 SampleWindow::onStatusbarVisibleChanged()
 {
   bool visible = m_Statusbar.get_visible();
+  SampleSettings::getDefault()->setStatusbarVisible(visible);
   Glib::RefPtr<Gtk::ToggleAction> action =
      Glib::RefPtr<Gtk::ToggleAction>::cast_dynamic(
          m_refToggleActionGroup->get_action("ViewStatusbar"));
@@ -382,20 +417,48 @@ SampleWindow::requestUnfullscreen()
   if(!isFullscreen()) return;
   unfullscreen();
   m_pMenuBar->show();
-  Glib::RefPtr<Gtk::Action> action = m_refToggleActionGroup->get_action("ViewToolbar");
+
+  Glib::RefPtr<Gtk::ToggleAction> action =
+     Glib::RefPtr<Gtk::ToggleAction>::cast_dynamic(
+         m_refToggleActionGroup->get_action("ViewToolbar"));
   g_assert(action != 0);
-  if((Glib::RefPtr<Gtk::ToggleAction>::cast_dynamic(action))->get_active()) {
+  if(action->get_active()) {
     m_pToolbar->show();
   }
   m_tbVisibleConnection.unblock();
 
-  action = m_refToggleActionGroup->get_action("ViewStatusbar");
+  action = Glib::RefPtr<Gtk::ToggleAction>::cast_dynamic(
+         m_refToggleActionGroup->get_action("ViewStatusbar"));
   g_assert(action != 0);
-  if((Glib::RefPtr<Gtk::ToggleAction>::cast_dynamic(action))->get_active()) {
+  if(action->get_active()) {
     m_Statusbar.show();
   }
   m_sbVisibleConnection.unblock();
   displayFullscreenToolbar(false);
+}
+
+void
+SampleWindow::initToolbarVisible()
+{
+  SampleSettings* settings = SampleSettings::getDefault();
+  bool visible = settings->getToolbarVisible();
+  Glib::RefPtr<Gtk::ToggleAction> action = 
+      Glib::RefPtr<Gtk::ToggleAction>::cast_dynamic(
+          m_refToggleActionGroup->get_action("ViewToolbar"));
+  action->set_active(visible);
+  m_pToolbar->set_visible(visible);
+}
+
+void
+SampleWindow::initStatusbarVisible()
+{
+  SampleSettings* settings = SampleSettings::getDefault();
+  bool visible = settings->getStatusbarVisible();
+  Glib::RefPtr<Gtk::ToggleAction> action = 
+      Glib::RefPtr<Gtk::ToggleAction>::cast_dynamic(
+          m_refToggleActionGroup->get_action("ViewStatusbar"));
+  action->set_active(visible);
+  m_Statusbar.set_visible(visible);
 }
 
 void
@@ -407,15 +470,18 @@ SampleWindow::initUI()
   Gtk::Widget* pWidget = m_refUIManager->get_widget("/MenuBar");
   m_pMenuBar = dynamic_cast<Gtk::MenuBar*>(pWidget);
   m_VBox.pack_start(*m_pMenuBar, Gtk::PACK_SHRINK);
+  m_pMenuBar->show();
 
   pWidget = m_refUIManager->get_widget("/ToolBar");
   m_pToolbar = dynamic_cast<Gtk::Toolbar*>(pWidget);
   m_VBox.pack_start(*m_pToolbar, Gtk::PACK_SHRINK);
+  initToolbarVisible();
   m_tbVisibleConnection = pWidget->property_visible().signal_changed().connect(
       sigc::mem_fun(*this, &SampleWindow::onToolbarVisibleChanged));
 
   m_VBox.pack_end(m_Statusbar, Gtk::PACK_SHRINK);
   m_ctxId = m_Statusbar.get_context_id("tip_message");
+  initStatusbarVisible();
   m_sbVisibleConnection = m_Statusbar.property_visible().signal_changed().connect(
       sigc::mem_fun(*this, &SampleWindow::onStatusbarVisibleChanged));
 }
