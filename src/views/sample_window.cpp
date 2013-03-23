@@ -5,17 +5,22 @@
 #include <gtkmm/item.h>
 #include <gtkmm/toggleaction.h>
 #include <gtkmm/accelkey.h>
+#include <gtkmm/aboutdialog.h>
 
 #include "sample_window.h"
 #include "../sample_settings.h"
 
 #define  SAMPLE_UI_FILE     RES_DIR "/sample_ui.xml" 
+#define  LOGO_FILE     RES_DIR "/logo.png" 
 #define ANIMATION_SPEED 4
 
 SampleWindow::SampleWindow()
   :m_winFullscreen(Gtk::WINDOW_POPUP)
 {
   int w, h, state;
+
+  set_default_icon_from_file(LOGO_FILE);
+
   state = SampleSettings::getDefault()->getWindowState();
   SampleSettings::getDefault()->getWindowSize(w, h);
   set_default_size(w, h);
@@ -216,7 +221,25 @@ SampleWindow::onViewFullscreen()
 void
 SampleWindow::onHelpAbout()
 {
+  static Gtk::AboutDialog *pAbout = NULL;
+  static std::vector<Glib::ustring> authors;
+  static std::vector<Glib::ustring> documenters;
   std::cout << " onHelpAbout " << std::endl;
+  if(pAbout == NULL) {
+    authors.clear();
+    documenters.clear();
+    authors.push_back("iltgcl <iltgcl@163.com>");
+    pAbout = new Gtk::AboutDialog();
+    pAbout->set_name("GtkmmSample");
+    pAbout->set_authors(authors);
+    pAbout->set_version("0.1");
+    pAbout->set_copyright("Copyright \xc2\xa9 2004-2011 iltgcl");
+    pAbout->set_comments("A Gtkmm example.");
+    pAbout->set_translator_credits("");
+    pAbout->set_documenters(documenters);
+  }
+  pAbout->run();
+  pAbout->hide();
 }
 
 bool 

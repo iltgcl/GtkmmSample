@@ -29,9 +29,6 @@ SampleSettings::SampleSettings()
   Glib::setenv("GSETTINGS_SCHEMA_DIR", RES_DIR, true);
   //Glib::setenv("GSETTINGS_BACKEND", "memory", true);
   m_refSettings = Gio::Settings::create("com.iltgcl.gtkmmsample");
-  std::cout << Glib::ustring::compose("Initial value of '%1': '%2'\n", 
-                                      KEY_TOOLBAR_VISIBLE, 
-                                      m_refSettings->get_boolean(KEY_TOOLBAR_VISIBLE));
 }
 
 int 

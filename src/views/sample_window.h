@@ -27,6 +27,7 @@
 #include <gtkmm/box.h>
 #include <gtkmm/action.h>
 #include <gdkmm/window.h>
+#include <gdk-pixbuf/gdk-pixbuf.h>
 
 #include "sample_statusbar.h"
 
