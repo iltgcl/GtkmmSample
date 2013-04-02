@@ -173,7 +173,7 @@ $(c_objects): $(intermediates)/%.o: $(LOCAL_PATH)/%.c
 endif
 
 ifneq ($(strip $(cpp_objects)),)
-$(cpp_objects): $(intermediates)/%.o: $(LOCAL_PATH)/%.cpp
+$(cpp_objects): $(intermediates)/%.o: $(LOCAL_PATH)/%.$(CPP_EXT)
 	$(transform-host-cpp-to-o)
 -include $(cpp_objects:%.o=%.P)
 endif

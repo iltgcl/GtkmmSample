@@ -4,9 +4,9 @@
 
 #include "sample_settings.h"
 
-const Glib::ustring SampleSettings::KEY_WINDOW_STATE = "window-state";
-const Glib::ustring SampleSettings::KEY_WINDOW_WIDTH = "window-width";
-const Glib::ustring SampleSettings::KEY_WINDOW_HEIGHT = "window-height";
+const Glib::ustring SampleSettings::KEY_WINDOW_STATE = "state";
+const Glib::ustring SampleSettings::KEY_WINDOW_WIDTH = "width";
+const Glib::ustring SampleSettings::KEY_WINDOW_HEIGHT = "height";
 const Glib::ustring SampleSettings::KEY_TOOLBAR_VISIBLE = "toolbar-visible";
 const Glib::ustring SampleSettings::KEY_STATUSBAR_VISIBLE = "statusbar-visible";
 
@@ -28,57 +28,58 @@ SampleSettings::SampleSettings()
    */
   Glib::setenv("GSETTINGS_SCHEMA_DIR", RES_DIR, true);
   //Glib::setenv("GSETTINGS_BACKEND", "memory", true);
-  m_refSettings = Gio::Settings::create("com.iltgcl.gtkmmsample");
+  m_refPrefUI = Gio::Settings::create("com.iltgcl.gtkmmsample.preferences.ui");
+  m_refWinState = Gio::Settings::create("com.iltgcl.gtkmmsample.state.window");
 }
 
 int 
 SampleSettings::getWindowState()
 {
-  return m_refSettings->get_int(KEY_WINDOW_STATE);
+  return m_refWinState->get_int(KEY_WINDOW_STATE);
 }
 
 void 
 SampleSettings::setWindowState(int state)
 {
-  m_refSettings->set_int(KEY_WINDOW_STATE, state);
+  m_refWinState->set_int(KEY_WINDOW_STATE, state);
 }
 
 void 
 SampleSettings::getWindowSize(int& width, int& height)
 {
-  width = m_refSettings->get_int(KEY_WINDOW_WIDTH);
-  height = m_refSettings->get_int(KEY_WINDOW_HEIGHT);
+  width = m_refWinState->get_int(KEY_WINDOW_WIDTH);
+  height = m_refWinState->get_int(KEY_WINDOW_HEIGHT);
   
 }
 
 void 
 SampleSettings::setWindowSize(int width, int height)
 {
-  m_refSettings->set_int(KEY_WINDOW_WIDTH, width);
-  m_refSettings->set_int(KEY_WINDOW_HEIGHT, height);
+  m_refWinState->set_int(KEY_WINDOW_WIDTH, width);
+  m_refWinState->set_int(KEY_WINDOW_HEIGHT, height);
 }
 
 bool 
 SampleSettings::getToolbarVisible()
 {
-  return m_refSettings->get_boolean(KEY_TOOLBAR_VISIBLE);
+  return m_refPrefUI->get_boolean(KEY_TOOLBAR_VISIBLE);
 }
 
 bool 
 SampleSettings::getStatusbarVisible()
 {
-  return m_refSettings->get_boolean(KEY_STATUSBAR_VISIBLE);
+  return m_refPrefUI->get_boolean(KEY_STATUSBAR_VISIBLE);
 }
 
 void 
 SampleSettings::setToolbarVisible(bool visible) 
 {
-  m_refSettings->set_boolean(KEY_TOOLBAR_VISIBLE, visible);
+  m_refPrefUI->set_boolean(KEY_TOOLBAR_VISIBLE, visible);
 }
 
 void 
 SampleSettings::setStatusbarVisible(bool visible)
 {
-  m_refSettings->set_boolean(KEY_STATUSBAR_VISIBLE, visible);
+  m_refPrefUI->set_boolean(KEY_STATUSBAR_VISIBLE, visible);
 }
 

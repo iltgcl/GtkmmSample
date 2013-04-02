@@ -43,7 +43,8 @@ class SampleSettings : public Glib::Object
  private:
   SampleSettings();
 
-  Glib::RefPtr<Gio::Settings> m_refSettings;
+  Glib::RefPtr<Gio::Settings> m_refPrefUI;
+  Glib::RefPtr<Gio::Settings> m_refWinState;
   static SampleSettings* m_Instance;
 };
 

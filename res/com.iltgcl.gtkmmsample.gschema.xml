@@ -1,46 +1,38 @@
 <schemalist>
-  <schema id="com.iltgcl.gtkmmsample" path="/com/iltgcl/gtkmmsample/" >
-
+  <schema id="com.iltgcl.gtkmmsample" path="/com/iltgcl/gtkmmsample/">
+    <child schema="com.iltgcl.gtkmmsample.preferences" name="preferences"/>
+    <child schema="com.iltgcl.gtkmmsample.state" name="state"/>
+  </schema>
+  <schema id="com.iltgcl.gtkmmsample.preferences" path="/com/iltgcl/gtkmmsample/preferences/">
+    <child schema="com.iltgcl.gtkmmsample.preferences.ui" name="ui"/>
+  </schema>
+  <schema id="com.iltgcl.gtkmmsample.preferences.ui" path="/com/iltgcl/gtkmmsample/preferences/ui/">
     <key name="toolbar-visible" type="b">
       <default>true</default>
       <summary>Is the toolbar showing?</summary>
-      <description>
-        Show or hide the toolbar.
-      </description>
+      <description>Show or hide the toolbar.</description>
     </key>
-
     <key name="statusbar-visible" type="b">
       <default>true</default>
       <summary>Is the statusbar showing?</summary>
-      <description>
-        Show or hide the statusbar.
-      </description>
+      <description>Show or hide the statusbar.</description>
     </key>
-
-    <key name="window-state" type="i">
-      <default>0</default>
-      <summary>window's state</summary>
-      <description>
-        The state of main window.
-      </description>
-    </key>
-
-    <key name="window-width" type="i">
-      <default>800</default>
-      <summary>window's width</summary>
-      <description>
-        The width of main window.
-      </description>
-    </key>
-
-    <key name="window-height" type="i">
-      <default>500</default>
-      <summary>window's height</summary>
-      <description>
-        The height of main window.
-      </description>
-    </key>
-
   </schema>
+
+  <schema id="com.iltgcl.gtkmmsample.state" path="/com/iltgcl/gtkmmsample/state/">
+    <child schema="com.iltgcl.gtkmmsample.state.window" name="state"/>
+  </schema>
+  <schema id="com.iltgcl.gtkmmsample.state.window" path="/com/iltgcl/gtkmmsample/state/window/">
+    <key name="state" type="i">
+      <default>0</default>
+    </key>
+    <key name="width" type="i">
+      <default>800</default>
+    </key>
+    <key name="height" type="i">
+      <default>500</default>
+    </key>
+  </schema>
+
 </schemalist>
 

@@ -222,12 +222,10 @@ void
 SampleWindow::onHelpAbout()
 {
   static Gtk::AboutDialog *pAbout = NULL;
-  static std::vector<Glib::ustring> authors;
-  static std::vector<Glib::ustring> documenters;
   std::cout << " onHelpAbout " << std::endl;
   if(pAbout == NULL) {
-    authors.clear();
-    documenters.clear();
+    std::vector<Glib::ustring> authors;
+    std::vector<Glib::ustring> documenters;
     authors.push_back("iltgcl <iltgcl@163.com>");
     pAbout = new Gtk::AboutDialog();
     pAbout->set_name("GtkmmSample");
