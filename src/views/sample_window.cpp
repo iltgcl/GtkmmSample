@@ -6,6 +6,7 @@
 #include <gtkmm/toggleaction.h>
 #include <gtkmm/accelkey.h>
 #include <gtkmm/aboutdialog.h>
+#include <gtkmm/clipboard.h>
 
 #include "sample_window.h"
 #include "../sample_settings.h"
@@ -32,19 +33,136 @@ SampleWindow::SampleWindow()
   }
 
   add(m_VBox);
-  m_VBox.show();
 
-  m_refSensitiveActionGroup = Gtk::ActionGroup::create("SensitiveActions");
-  m_refNormalActionGroup = Gtk::ActionGroup::create("NormalActions");
-  m_refToggleActionGroup = Gtk::ActionGroup::create("ToggleActions");
   m_refUIManager = Gtk::UIManager::create();
   add_accel_group(m_refUIManager->get_accel_group());
 
   initActions();
+
+  /* create ui */
+  m_refUIManager->add_ui_from_file(SAMPLE_UI_FILE);
+  m_refUIManager->signal_connect_proxy().connect(sigc::mem_fun(*this, &SampleWindow::onConnectProxy));
+
+  Gtk::Widget* pWidget = m_refUIManager->get_widget("/MenuBar");
+  m_pMenuBar = dynamic_cast<Gtk::MenuBar*>(pWidget);
+  m_VBox.pack_start(*m_pMenuBar, Gtk::PACK_SHRINK);
+  m_pMenuBar->show();
+
+  pWidget = m_refUIManager->get_widget("/ToolBar");
+  m_pToolbar = dynamic_cast<Gtk::Toolbar*>(pWidget);
+  m_VBox.pack_start(*m_pToolbar, Gtk::PACK_SHRINK);
+  m_tbVisibleConnection = pWidget->property_visible().signal_changed().connect(
+      sigc::mem_fun(*this, &SampleWindow::onToolbarVisibleChanged));
+
+  m_VBox.pack_start(m_ClientRoot, true, true);
+  m_ClientRoot.show_all();
+
+  m_VBox.pack_end(m_Statusbar, Gtk::PACK_SHRINK);
+  m_ctxId = m_Statusbar.get_context_id("tip_message");
+  m_sbVisibleConnection = m_Statusbar.property_visible().signal_changed().connect(
+      sigc::mem_fun(*this, &SampleWindow::onStatusbarVisibleChanged));
+
+  show_all();
+
   initUI();
+  initFullscreen();
 
-  show();
+  /* signal connect */
+  signal_delete_event().connect(sigc::mem_fun(*this, &SampleWindow::onDeleteEvent)); 
+  m_ClientRoot.property_can_save().signal_changed().connect(
+      sigc::mem_fun(*this, &SampleWindow::onCanSaveChanged));
+  m_ClientRoot.property_can_save_as().signal_changed().connect(
+      sigc::mem_fun(*this, &SampleWindow::onCanSaveAsChanged));
+  m_ClientRoot.property_can_undo().signal_changed().connect(
+      sigc::mem_fun(*this, &SampleWindow::onCanUndoChanged));
+  m_ClientRoot.property_can_redo().signal_changed().connect(
+      sigc::mem_fun(*this, &SampleWindow::onCanRedoChanged));
+  m_ClientRoot.property_can_cut().signal_changed().connect(
+      sigc::mem_fun(*this, &SampleWindow::onCanCutChanged));
+  m_ClientRoot.property_can_copy().signal_changed().connect(
+      sigc::mem_fun(*this, &SampleWindow::onCanCopyChanged));
+  m_ClientRoot.property_can_paste().signal_changed().connect(
+      sigc::mem_fun(*this, &SampleWindow::onCanPasteChanged));
+  m_ClientRoot.property_can_delete().signal_changed().connect(
+      sigc::mem_fun(*this, &SampleWindow::onCanDeleteChanged));
+  m_ClientRoot.property_can_select_all().signal_changed().connect(
+      sigc::mem_fun(*this, &SampleWindow::onCanSelectAllChanged));
+}
 
+void 
+SampleWindow::onCanSaveChanged()
+{
+  Glib::RefPtr<Gtk::Action> action = m_refNormalActionGroup->get_action("FileSave");
+  g_assert(action != 0);
+  action->set_sensitive(m_ClientRoot.property_can_save().get_value());
+}
+
+void 
+SampleWindow::onCanSaveAsChanged()
+{
+  Glib::RefPtr<Gtk::Action> action = m_refNormalActionGroup->get_action("FileSaveAs");
+  g_assert(action != 0);
+  action->set_sensitive(m_ClientRoot.property_can_save_as().get_value());
+}
+
+void 
+SampleWindow::onCanUndoChanged()
+{
+  Glib::RefPtr<Gtk::Action> action = m_refNormalActionGroup->get_action("EditUndo");
+  g_assert(action != 0);
+  action->set_sensitive(m_ClientRoot.property_can_undo().get_value());
+}
+
+void 
+SampleWindow::onCanRedoChanged()
+{
+  Glib::RefPtr<Gtk::Action> action = m_refNormalActionGroup->get_action("EditRedo");
+  g_assert(action != 0);
+  action->set_sensitive(m_ClientRoot.property_can_redo().get_value());
+}
+
+void 
+SampleWindow::onCanCutChanged()
+{
+  Glib::RefPtr<Gtk::Action> action = m_refNormalActionGroup->get_action("EditCut");
+  g_assert(action != 0);
+  action->set_sensitive(m_ClientRoot.property_can_cut().get_value());
+}
+
+void 
+SampleWindow::onCanCopyChanged()
+{
+  Glib::RefPtr<Gtk::Action> action = m_refNormalActionGroup->get_action("EditCopy");
+  g_assert(action != 0);
+  action->set_sensitive(m_ClientRoot.property_can_copy().get_value());
+}
+
+void 
+SampleWindow::onCanPasteChanged()
+{
+  Glib::RefPtr<Gtk::Action> action = m_refNormalActionGroup->get_action("EditPaste");
+  g_assert(action != 0);
+  action->set_sensitive(m_ClientRoot.property_can_paste().get_value());
+}
+
+void 
+SampleWindow::onCanDeleteChanged()
+{
+  Glib::RefPtr<Gtk::Action> action = m_refNormalActionGroup->get_action("EditDelete");
+  g_assert(action != 0);
+  action->set_sensitive(m_ClientRoot.property_can_delete().get_value());
+}
+
+void 
+SampleWindow::onCanSelectAllChanged()
+{
+  Glib::RefPtr<Gtk::Action> action = m_refNormalActionGroup->get_action("EditSelectAll");
+  g_assert(action != 0);
+  action->set_sensitive(m_ClientRoot.property_can_select_all().get_value());
+}
+
+void SampleWindow::initFullscreen() 
+{
   /* init fullscreen */
   Gtk::Widget *pWidget = m_refUIManager->get_widget("/FullscreenToolBar");
   m_winFullscreen.add(*pWidget);
@@ -53,8 +171,6 @@ SampleWindow::SampleWindow()
       sigc::mem_fun(*this, &SampleWindow::onEnterNotifyEvent));
   m_winFullscreen.signal_leave_notify_event().connect(
       sigc::mem_fun(*this, &SampleWindow::onLeaveNotifyEvent));
-
-  signal_delete_event().connect(sigc::mem_fun(*this, &SampleWindow::onDeleteEvent)); 
 }
 
 void
@@ -88,11 +204,44 @@ SampleWindow::on_window_state_event(GdkEventWindowState* event)
   return false;
 }
 
+void
+SampleWindow::onClipboardReceived(const Gtk::SelectionData& selection_data)
+{
+  bool sens = selection_data.targets_include_text() && m_ClientRoot.property_can_paste().get_value();
+  Glib::RefPtr<Gtk::Action> action = m_refNormalActionGroup->get_action("EditPaste");
+  g_assert(action != 0);
+  std::cout << " sensitive  = " << sens << std::endl;
+  action->set_sensitive(sens);
+}
+
+void
+SampleWindow::setPasteSensitivity()
+{
+  Gtk::Clipboard::get(GDK_SELECTION_CLIPBOARD)->request_contents(
+      "TARGETS", sigc::mem_fun(*this, &SampleWindow::onClipboardReceived));
+}
+
+void
+SampleWindow::onOwnerChange(GdkEventOwnerChange* event)
+{
+  setPasteSensitivity();
+}
+
+void
+SampleWindow::on_realize()
+{
+  std::cout << " client root property = " << m_ClientRoot.property_can_undo().get_value() << std::endl;
+  Gtk::Clipboard::get(GDK_SELECTION_CLIPBOARD)->signal_owner_change().connect(
+      sigc::mem_fun(*this, &SampleWindow::onOwnerChange));
+
+  Window::on_realize();
+}
+
 bool 
 SampleWindow::on_configure_event(GdkEventConfigure* event)
 {
-  if(get_realized() && ((m_winState & 
-                         (GDK_WINDOW_STATE_MAXIMIZED | GDK_WINDOW_STATE_FULLSCREEN))==0)) {
+  if(get_realized() && 
+     ((m_winState & (GDK_WINDOW_STATE_MAXIMIZED | GDK_WINDOW_STATE_FULLSCREEN))==0)) {
     saveWindowState();
   }
   return Window::on_configure_event(event);
@@ -261,6 +410,9 @@ SampleWindow::onLeaveFullscreen()
 void
 SampleWindow::initActions()
 {
+  m_refSensitiveActionGroup = Gtk::ActionGroup::create("SensitiveActions");
+  m_refNormalActionGroup = Gtk::ActionGroup::create("NormalActions");
+  m_refToggleActionGroup = Gtk::ActionGroup::create("ToggleActions");
   /* Top menu */
   m_refSensitiveActionGroup->add(Gtk::Action::create("File", "_File"));
   m_refSensitiveActionGroup->add(Gtk::Action::create("Edit", "_Edit"));
@@ -297,48 +449,59 @@ SampleWindow::initActions()
   m_refUIManager->insert_action_group(m_refSensitiveActionGroup);
 
   /* normal action */
-  m_refNormalActionGroup->add(
-      Gtk::Action::create("FileSave", Gtk::Stock::SAVE, Glib::ustring(), "Save the current file"),
-      Gtk::AccelKey("<control>S"),
+  action = Gtk::Action::create("FileSave", Gtk::Stock::SAVE, 
+                               Glib::ustring(), "Save the current file");
+  m_refNormalActionGroup->add(action, Gtk::AccelKey("<control>S"),
       sigc::mem_fun(*this, &SampleWindow::onFileSave));
+  action->set_sensitive(false);
 
-  m_refNormalActionGroup->add(
-      Gtk::Action::create("FileSaveAs", Gtk::Stock::SAVE_AS, 
-                          Glib::ustring(), "Save the current file with different name"),
-      Gtk::AccelKey("<shift><control>S"),
+  action = Gtk::Action::create("FileSaveAs", Gtk::Stock::SAVE_AS, 
+                               Glib::ustring(), "Save the current file with different name");
+  m_refNormalActionGroup->add(action, Gtk::AccelKey("<shift><control>S"),
       sigc::mem_fun(*this, &SampleWindow::onFileSaveAs));
+  action->set_sensitive(false);
 
-  m_refNormalActionGroup->add(
-      Gtk::Action::create("EditUndo", Gtk::Stock::UNDO, Glib::ustring(), "Undo the last action"),
-      Gtk::AccelKey("<control>Z"),
+  action = Gtk::Action::create("EditUndo", Gtk::Stock::UNDO, 
+                               Glib::ustring(), "Undo the last action");
+  m_refNormalActionGroup->add(action, Gtk::AccelKey("<control>Z"),
       sigc::mem_fun(*this, &SampleWindow::onEditUndo));
+  action->set_sensitive(false);
 
-  m_refNormalActionGroup->add(
-      Gtk::Action::create("EditRedo", Gtk::Stock::REDO, 
-                          Glib::ustring(), "Redo the last undone action"),
-      Gtk::AccelKey("<shift><control>Z"),
+  action = Gtk::Action::create("EditRedo", Gtk::Stock::REDO, 
+                               Glib::ustring(), "Redo the last undone action");
+  m_refNormalActionGroup->add(action, Gtk::AccelKey("<shift><control>Z"),
       sigc::mem_fun(*this, &SampleWindow::onEditRedo));
-  m_refNormalActionGroup->add(
-      Gtk::Action::create("EditCut", Gtk::Stock::CUT, Glib::ustring(), "Cut the selection"),
-      Gtk::AccelKey("<control>X"),
+  action->set_sensitive(false);
+
+  action = Gtk::Action::create("EditCut", Gtk::Stock::CUT, 
+                               Glib::ustring(), "Cut the selection");
+  m_refNormalActionGroup->add(action, Gtk::AccelKey("<control>X"),
       sigc::mem_fun(*this, &SampleWindow::onEditCut));
-  m_refNormalActionGroup->add(
-      Gtk::Action::create("EditCopy", Gtk::Stock::COPY, Glib::ustring(), "Copy the selection"),
-      Gtk::AccelKey("<control>C"),
+  action->set_sensitive(false);
+
+  action = Gtk::Action::create("EditCopy", Gtk::Stock::COPY, 
+                               Glib::ustring(), "Copy the selection");
+  m_refNormalActionGroup->add(action, Gtk::AccelKey("<control>C"),
       sigc::mem_fun(*this, &SampleWindow::onEditCopy));
-  m_refNormalActionGroup->add(
-      Gtk::Action::create("EditPaste", Gtk::Stock::PASTE, Glib::ustring(), "Paste the clipboard"),
-      Gtk::AccelKey("<control>V"),
+  action->set_sensitive(false);
+
+  action = Gtk::Action::create("EditPaste", Gtk::Stock::PASTE, 
+                               Glib::ustring(), "Paste the clipboard");
+  m_refNormalActionGroup->add(action, Gtk::AccelKey("<control>V"),
       sigc::mem_fun(*this, &SampleWindow::onEditPaste));
-  m_refNormalActionGroup->add(
-      Gtk::Action::create("EditDelete", Gtk::Stock::DELETE, 
-                          Glib::ustring(), "Delete the selected text"),
-      sigc::mem_fun(*this, &SampleWindow::onEditDelete));
-  m_refNormalActionGroup->add(
-      Gtk::Action::create("EditSelectAll", Gtk::Stock::SELECT_ALL, 
-                          Glib::ustring(), "Select the entire document"),
-      Gtk::AccelKey("<control>A"),
+  action->set_sensitive(false);
+
+  action = Gtk::Action::create("EditDelete", Gtk::Stock::DELETE, 
+                               Glib::ustring(), "Delete the selected text");
+  m_refNormalActionGroup->add(action, sigc::mem_fun(*this, &SampleWindow::onEditDelete));
+  action->set_sensitive(false);
+
+  action = Gtk::Action::create("EditSelectAll", Gtk::Stock::SELECT_ALL, 
+                               Glib::ustring(), "Select the entire document");
+  m_refNormalActionGroup->add(action, Gtk::AccelKey("<control>A"),
       sigc::mem_fun(*this, &SampleWindow::onEditSelectAll));
+  action->set_sensitive(false);
+
   m_refNormalActionGroup->add(
       Gtk::Action::create("EditPreferences", Gtk::Stock::PREFERENCES, 
                           "Pr_eferences", "Configure the application"),
@@ -485,26 +648,8 @@ SampleWindow::initStatusbarVisible()
 void
 SampleWindow::initUI()
 {
-  m_refUIManager->add_ui_from_file(SAMPLE_UI_FILE);
-  m_refUIManager->signal_connect_proxy().connect(sigc::mem_fun(*this, &SampleWindow::onConnectProxy));
-
-  Gtk::Widget* pWidget = m_refUIManager->get_widget("/MenuBar");
-  m_pMenuBar = dynamic_cast<Gtk::MenuBar*>(pWidget);
-  m_VBox.pack_start(*m_pMenuBar, Gtk::PACK_SHRINK);
-  m_pMenuBar->show();
-
-  pWidget = m_refUIManager->get_widget("/ToolBar");
-  m_pToolbar = dynamic_cast<Gtk::Toolbar*>(pWidget);
-  m_VBox.pack_start(*m_pToolbar, Gtk::PACK_SHRINK);
   initToolbarVisible();
-  m_tbVisibleConnection = pWidget->property_visible().signal_changed().connect(
-      sigc::mem_fun(*this, &SampleWindow::onToolbarVisibleChanged));
-
-  m_VBox.pack_end(m_Statusbar, Gtk::PACK_SHRINK);
-  m_ctxId = m_Statusbar.get_context_id("tip_message");
   initStatusbarVisible();
-  m_sbVisibleConnection = m_Statusbar.property_visible().signal_changed().connect(
-      sigc::mem_fun(*this, &SampleWindow::onStatusbarVisibleChanged));
 }
 
 void 

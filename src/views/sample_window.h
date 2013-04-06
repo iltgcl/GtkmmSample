@@ -30,6 +30,8 @@
 #include <gdk-pixbuf/gdk-pixbuf.h>
 
 #include "sample_statusbar.h"
+#include "client_root.h"
+
 
 typedef enum {
   SAMPLE_WINDOW_STATE_NORMAL,
@@ -48,8 +50,10 @@ class SampleWindow : public Gtk::Window
   /* override signal */
   virtual bool on_window_state_event(GdkEventWindowState* event);
   virtual bool on_configure_event(GdkEventConfigure* event);
+  virtual void on_realize();
 
   /* callbacks */
+  void onOwnerChange(GdkEventOwnerChange* event);
   void onToolbarVisibleChanged();
   void onStatusbarVisibleChanged();
   /* Always sensitive action callback */
@@ -87,6 +91,7 @@ class SampleWindow : public Gtk::Window
   void initStatusbarVisible();
   void initActions();
   void initUI();
+  void initFullscreen();
   void saveWindowState();
   void requestFullscreen();
   void requestUnfullscreen();
@@ -94,6 +99,17 @@ class SampleWindow : public Gtk::Window
   bool onAnimationTimeout();
   void beginAnimation(bool is_enter);
   void getGeometry(Gdk::Rectangle &rect);
+  void setPasteSensitivity();
+  void onClipboardReceived(const Gtk::SelectionData& selection_data);
+  void onCanSaveChanged();
+  void onCanSaveAsChanged();
+  void onCanUndoChanged();
+  void onCanRedoChanged();
+  void onCanCutChanged();
+  void onCanCopyChanged();
+  void onCanPasteChanged();
+  void onCanDeleteChanged();
+  void onCanSelectAllChanged();
 
   guint m_ctxId;
   GdkWindowState m_winState;
@@ -105,6 +121,7 @@ class SampleWindow : public Gtk::Window
   Gtk::VBox m_VBox;
   Gtk::MenuBar *m_pMenuBar;
   Gtk::Toolbar *m_pToolbar;
+  ClientRoot m_ClientRoot;
   SampleStatusbar m_Statusbar;
   sigc::connection m_tbVisibleConnection;
   sigc::connection m_sbVisibleConnection;
