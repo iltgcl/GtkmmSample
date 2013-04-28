@@ -6,8 +6,10 @@ TARGET := GtkmmSample
 
 #LOCAL_ASFLAGS
 #LOCAL_CPPFLAGS
-LOCAL_CFLAGS = `pkg-config gtkmm-2.4 --cflags`
-LOCAL_LDFLAGS = `pkg-config gtkmm-2.4 --libs`
+#LOCAL_CFLAGS = `pkg-config gtkmm-2.4 --cflags`
+#LOCAL_LDFLAGS = `pkg-config gtkmm-2.4 --libs`
+LOCAL_CFLAGS = `pkg-config gtkmm-3.0 --cflags`
+LOCAL_LDFLAGS = `pkg-config gtkmm-3.0 --libs`
 
 #add java support
 #LOCAL_CFLAGS += -I/usr/lib/jvm/java-6-sun-1.6.0.26/include -I/usr/lib/jvm/java-6-sun-1.6.0.26/include/ linux 
@@ -46,7 +48,7 @@ else
   endif
 endif
 
-LOCAL_INCLUDES += $(EXTRA_LIBS_DIR) 
+LOCAL_INCLUDES += $(SRC_ROOT) $(EXTRA_LIBS_DIR) 
 ifneq ($(RES_DIR),)
 	LOCAL_CPPFLAGS +=-DRES_DIR=\""$(RES_DIR)"\"
 	LOCAL_INCLUDES += $(RES_DIR)

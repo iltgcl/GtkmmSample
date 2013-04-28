@@ -22,7 +22,6 @@
 
 SampleStatusbar::SampleStatusbar()
 {
-  set_has_resize_grip(false);
   m_cmdLabel.set_width_chars(CMD_LABEL_WIDTH_CHARS);
   pack_end(m_cmdLabel, false, true, 0);
   pack_end(m_cmdSpinner, false, true, 0);

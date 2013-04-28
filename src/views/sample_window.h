@@ -77,10 +77,6 @@ class SampleWindow : public Gtk::Window
   void onViewToolbar();
   void onViewStatusbar();
   void onViewFullscreen();
-  /* Menu item select and deselect. */
-  void onMenuItemSelect(const Glib::RefPtr<Gtk::Action>& action);
-  void onMenuItemDeselect();
-  void onConnectProxy(const Glib::RefPtr<Gtk::Action>& action, Gtk::Widget* widget);
   /* fullscreen window callback  */
   bool onEnterNotifyEvent(GdkEventCrossing* event);
   bool onLeaveNotifyEvent(GdkEventCrossing* event);

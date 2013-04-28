@@ -2,7 +2,6 @@
 #include <gtkmm/stock.h>
 #include <gtkmm/main.h>
 #include <gtkmm/menuitem.h>
-#include <gtkmm/item.h>
 #include <gtkmm/toggleaction.h>
 #include <gtkmm/accelkey.h>
 #include <gtkmm/aboutdialog.h>
@@ -10,6 +9,7 @@
 
 #include "sample_window.h"
 #include "../sample_settings.h"
+#include "../utils/log.h"
 
 #define  SAMPLE_UI_FILE     RES_DIR "/sample_ui.xml" 
 #define  LOGO_FILE     RES_DIR "/logo.png" 
@@ -41,15 +41,14 @@ SampleWindow::SampleWindow()
 
   /* create ui */
   m_refUIManager->add_ui_from_file(SAMPLE_UI_FILE);
-  m_refUIManager->signal_connect_proxy().connect(sigc::mem_fun(*this, &SampleWindow::onConnectProxy));
 
   Gtk::Widget* pWidget = m_refUIManager->get_widget("/MenuBar");
-  m_pMenuBar = dynamic_cast<Gtk::MenuBar*>(pWidget);
+  m_pMenuBar = static_cast<Gtk::MenuBar*>(pWidget);
   m_VBox.pack_start(*m_pMenuBar, Gtk::PACK_SHRINK);
   m_pMenuBar->show();
 
   pWidget = m_refUIManager->get_widget("/ToolBar");
-  m_pToolbar = dynamic_cast<Gtk::Toolbar*>(pWidget);
+  m_pToolbar = static_cast<Gtk::Toolbar*>(pWidget);
   m_VBox.pack_start(*m_pToolbar, Gtk::PACK_SHRINK);
   m_tbVisibleConnection = pWidget->property_visible().signal_changed().connect(
       sigc::mem_fun(*this, &SampleWindow::onToolbarVisibleChanged));
@@ -197,7 +196,6 @@ SampleWindow::isFullscreen()
 bool 
 SampleWindow::on_window_state_event(GdkEventWindowState* event)
 {
-  std::cout << " SampleWindow::on_window_state_event " << std::endl;
   m_winState = event->new_window_state;
   SampleSettings::getDefault()->setWindowState(m_winState);
 
@@ -210,7 +208,7 @@ SampleWindow::onClipboardReceived(const Gtk::SelectionData& selection_data)
   bool sens = selection_data.targets_include_text() && m_ClientRoot.property_can_paste().get_value();
   Glib::RefPtr<Gtk::Action> action = m_refNormalActionGroup->get_action("EditPaste");
   g_assert(action != 0);
-  std::cout << " sensitive  = " << sens << std::endl;
+  LOGD("sensitive  = " << sens);
   action->set_sensitive(sens);
 }
 
@@ -230,7 +228,7 @@ SampleWindow::onOwnerChange(GdkEventOwnerChange* event)
 void
 SampleWindow::on_realize()
 {
-  std::cout << " client root property = " << m_ClientRoot.property_can_undo().get_value() << std::endl;
+  LOGD("can_undo property  = " << m_ClientRoot.property_can_undo().get_value());
   Gtk::Clipboard::get(GDK_SELECTION_CLIPBOARD)->signal_owner_change().connect(
       sigc::mem_fun(*this, &SampleWindow::onOwnerChange));
 
@@ -250,31 +248,33 @@ SampleWindow::on_configure_event(GdkEventConfigure* event)
 void
 SampleWindow::onFileNew()
 {
-  std::cout << " onFileNew " << std::endl;
+  //print message using red color.
+  //std::cout<<"\033[0;31m"<< " onFileNew" <<"\033[0m"<<std::endl;
+  LOGD("onFileNew. ");
 }
 
 void
 SampleWindow::onFileOpen()
 {
-  std::cout << " onFileOpen " << std::endl;
+  LOGD("onFileOpen. ");
 }
 
 void 
 SampleWindow::onFileSave()
 {
-  std::cout << " onFileSave " << std::endl;
+  LOGD("onFileSave. ");
 }
 
 void 
 SampleWindow::onFileSaveAs()
 {
-  std::cout << " onFileSaveAs " << std::endl;
+  LOGD("onFileSaveAs. ");
 }
 
 void
 SampleWindow::onFileQuit()
 {
-  std::cout << " onFileQuit " << std::endl;
+  LOGD("onFileQuit. ");
   Gtk::Main::quit();
 }
 
@@ -282,83 +282,83 @@ SampleWindow::onFileQuit()
 void 
 SampleWindow::onEditUndo()
 {
-  std::cout << " onEditUndo " << std::endl;
+  LOGD("onEditUndoonEditUndo. ");
 }
 
 void 
 SampleWindow::onEditRedo()
 {
-  std::cout << " onEditRedo " << std::endl;
+  LOGD("onEditRedo. ");
 }
 
 void 
 SampleWindow::onEditCut()
 {
-  std::cout << " onEditCut " << std::endl;
+  LOGD("onEditCut. ");
 }
 
 void 
 SampleWindow::onEditCopy()
 {
-  std::cout << " onEditCopy " << std::endl;
+  LOGD("onEditCopy. ");
 }
 
 void 
 SampleWindow::onEditPaste()
 {
-  std::cout << " onEditPaste " << std::endl;
+  LOGD("onEditPaste. ");
 }
 
 void 
 SampleWindow::onEditDelete()
 {
-  std::cout << " onEditDelete " << std::endl;
+  LOGD("onEditDelete. ");
 }
 
 void 
 SampleWindow::onEditSelectAll()
 {
-  std::cout << " onEditSelectAll " << std::endl;
+  LOGD("onEditSelectAll. ");
 }
 
 void 
 SampleWindow::onEditPreferences()
 {
-  std::cout << " onEditPreferences " << std::endl;
+  LOGD("onEditPreferences. ");
 }
 
 void 
 SampleWindow::onViewToolbar()
 {
   Glib::RefPtr<Gtk::ToggleAction> action =
-     Glib::RefPtr<Gtk::ToggleAction>::cast_dynamic(
+     Glib::RefPtr<Gtk::ToggleAction>::cast_static(
          m_refToggleActionGroup->get_action("ViewToolbar"));
   if(action->get_active()) {
     m_pToolbar->show();
   } else {
     m_pToolbar->hide();
   }
-  std::cout << " onViewToolbar " << std::endl;
+  LOGD("onViewToolbar. ");
 }
 
 void 
 SampleWindow::onViewStatusbar()
 {
   Glib::RefPtr<Gtk::ToggleAction> action =
-     Glib::RefPtr<Gtk::ToggleAction>::cast_dynamic(
+     Glib::RefPtr<Gtk::ToggleAction>::cast_static(
          m_refToggleActionGroup->get_action("ViewStatusbar"));
   if(action->get_active()) {
     m_Statusbar.show();
   } else {
     m_Statusbar.hide();
   }
-  std::cout << " onViewStatusbar " << std::endl;
+  LOGD("onViewStatusbar. ");
 }
 
 void 
 SampleWindow::onViewFullscreen()
 {
-  std::cout << " onViewFullscreen " << std::endl;
+  LOGD(" onViewFullscreen. ");
   if(isFullscreen()) {
     requestUnfullscreen();
   } else {
@@ -371,7 +371,7 @@ void
 SampleWindow::onHelpAbout()
 {
   static Gtk::AboutDialog *pAbout = NULL;
-  std::cout << " onHelpAbout " << std::endl;
+  LOGD(" onHelpAbout.");
   if(pAbout == NULL) {
     std::vector<Glib::ustring> authors;
     std::vector<Glib::ustring> documenters;
@@ -402,7 +402,7 @@ SampleWindow::onLeaveFullscreen()
   Glib::RefPtr<Gtk::Action> action = m_refToggleActionGroup->get_action("ViewFullscreen");
   g_assert(action != 0);
   action->block_activate();
-  (Glib::RefPtr<Gtk::ToggleAction>::cast_dynamic(action))->set_active(false);
+  (Glib::RefPtr<Gtk::ToggleAction>::cast_static(action))->set_active(false);
   requestUnfullscreen();
   action->unblock_activate();
 }
@@ -526,43 +526,16 @@ SampleWindow::initActions()
 }
 
 void
-SampleWindow::onMenuItemSelect(const Glib::RefPtr<Gtk::Action>& action)
-{
-  Glib::ustring tooltip = action->get_tooltip();
-  if(!tooltip.empty()) {
-    m_Statusbar.push(tooltip, m_ctxId);
-  }
-}
-
-void
-SampleWindow::onMenuItemDeselect()
-{
-  m_Statusbar.pop(m_ctxId);
-}
-
-void 
-SampleWindow::onConnectProxy(const Glib::RefPtr<Gtk::Action>& action, Gtk::Widget *widget)
-{
-  Gtk::MenuItem* menu_item = dynamic_cast<Gtk::MenuItem*>(widget);
-  if(menu_item) {
-    menu_item->signal_select().connect(
-        sigc::bind(sigc::mem_fun(*this, &SampleWindow::onMenuItemSelect), action));
-    menu_item->signal_deselect().connect(
-        sigc::mem_fun(*this, &SampleWindow::onMenuItemDeselect));
-  }
-}
-
-void
 SampleWindow::onToolbarVisibleChanged()
 {
   bool visible = m_pToolbar->get_visible();
-  std::cout << " toolbar visible =  " << visible << std::endl;
+  LOGD(" toolbar visible =  " << visible);
   SampleSettings::getDefault()->setToolbarVisible(visible);
   Glib::RefPtr<Gtk::ToggleAction> action =
-     Glib::RefPtr<Gtk::ToggleAction>::cast_dynamic(
+     Glib::RefPtr<Gtk::ToggleAction>::cast_static(
          m_refToggleActionGroup->get_action("ViewToolbar"));
   g_assert(action != 0);
-  std::cout << " action active =  " << action->get_active() << std::endl;
+  LOGD(" action active =  " << action->get_active());
   if(action->get_active() != visible) {
     action->set_active(visible);
   }
@@ -574,7 +547,7 @@ SampleWindow::onStatusbarVisibleChanged()
   bool visible = m_Statusbar.get_visible();
   SampleSettings::getDefault()->setStatusbarVisible(visible);
   Glib::RefPtr<Gtk::ToggleAction> action =
-     Glib::RefPtr<Gtk::ToggleAction>::cast_dynamic(
+     Glib::RefPtr<Gtk::ToggleAction>::cast_static(
          m_refToggleActionGroup->get_action("ViewStatusbar"));
   g_assert(action != 0);
   if(action->get_active() != visible) {
@@ -603,7 +576,7 @@ SampleWindow::requestUnfullscreen()
   m_pMenuBar->show();
 
   Glib::RefPtr<Gtk::ToggleAction> action =
-     Glib::RefPtr<Gtk::ToggleAction>::cast_dynamic(
+     Glib::RefPtr<Gtk::ToggleAction>::cast_static(
          m_refToggleActionGroup->get_action("ViewToolbar"));
   g_assert(action != 0);
   if(action->get_active()) {
@@ -611,7 +584,7 @@ SampleWindow::requestUnfullscreen()
   }
   m_tbVisibleConnection.unblock();
 
-  action = Glib::RefPtr<Gtk::ToggleAction>::cast_dynamic(
+  action = Glib::RefPtr<Gtk::ToggleAction>::cast_static(
          m_refToggleActionGroup->get_action("ViewStatusbar"));
   g_assert(action != 0);
   if(action->get_active()) {
@@ -627,7 +600,7 @@ SampleWindow::initToolbarVisible()
   SampleSettings* settings = SampleSettings::getDefault();
   bool visible = settings->getToolbarVisible();
   Glib::RefPtr<Gtk::ToggleAction> action = 
-      Glib::RefPtr<Gtk::ToggleAction>::cast_dynamic(
+      Glib::RefPtr<Gtk::ToggleAction>::cast_static(
           m_refToggleActionGroup->get_action("ViewToolbar"));
   action->set_active(visible);
   m_pToolbar->set_visible(visible);
@@ -639,7 +612,7 @@ SampleWindow::initStatusbarVisible()
   SampleSettings* settings = SampleSettings::getDefault();
   bool visible = settings->getStatusbarVisible();
   Glib::RefPtr<Gtk::ToggleAction> action = 
-      Glib::RefPtr<Gtk::ToggleAction>::cast_dynamic(
+      Glib::RefPtr<Gtk::ToggleAction>::cast_static(
           m_refToggleActionGroup->get_action("ViewStatusbar"));
   action->set_active(visible);
   m_Statusbar.set_visible(visible);
@@ -670,17 +643,13 @@ SampleWindow::onAnimationTimeout()
 
   getGeometry(rect);
 
-  //std::cout << " FullscreenToolbar::onAnimationTimeout " << std::endl;
   m_winFullscreen.get_position(x, y);
-  //std::cout << " current pos: x = " << x << ", y = " << y << std::endl;
 
-  //std::cout << " m_isEnter = " << m_isEnter << std::endl;
   if(m_isEnter) {
     if(y == rect.get_y()) {
       ret = false;
     } else {
       m_winFullscreen.move(x, y + 1);
-      //std::cout << " move to: x = " << x << ", y = " << y+1 << std::endl;
     }
   } else {
     int w, h;
